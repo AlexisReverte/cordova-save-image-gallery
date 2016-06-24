@@ -12,12 +12,14 @@ import org.apache.cordova.CordovaPlugin;
 import org.json.JSONArray;
 import org.json.JSONException;
 
-import android.content.Intent;
+import android.content.ContentValues;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.media.MediaScannerConnection;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
+import android.provider.MediaStore;
 import android.util.Base64;
 import android.util.Log;
 
@@ -41,6 +43,12 @@ public class SaveImageGallery extends CordovaPlugin {
     // actions constants
     public static final String SAVE_BASE64_ACTION = "saveImageDataToLibrary";
     public static final String REMOVE_IMAGE_ACTION = "removeImageFromLibrary";
+
+    private static final String LOG_TAG = "SaveImageGalleryPlugin";
+
+
+    private MediaScannerConnection conn;    // Used to update gallery app with newly-written files
+    private Uri scanMe;                     // Uri of image to be added to content store
 
     @Override
     public boolean execute(String action, JSONArray args, CallbackContext callbackContext) throws JSONException {
@@ -124,7 +132,7 @@ public class SaveImageGallery extends CordovaPlugin {
 
             // Update image gallery
             if (mediaScannerEnabled) {
-                scanPhoto(imageFile);
+                scanPhoto(imageFile, format);
             }
 
             String path = imageFile.toString();
@@ -206,10 +214,16 @@ public class SaveImageGallery extends CordovaPlugin {
      * Invoke the system's media scanner to add your photo to the Media Provider's database,
      * making it available in the Android Gallery application and to other apps.
      */
-    private void scanPhoto(File imageFile) {
-        Uri contentUri = Uri.fromFile(imageFile);
+    private void scanPhoto(File imageFile, String imgType) {
+        ContentValues values = new ContentValues();
+        values.put(MediaStore.Images.Media.TITLE, "player");
+        values.put(MediaStore.Images.Media.DISPLAY_NAME, "player");
+        values.put(MediaStore.Images.Media.DESCRIPTION, "");
+        values.put(MediaStore.Images.Media.MIME_TYPE, "image/" + imgType);
+        values.put(MediaStore.Images.Media.DATE_ADDED, System.currentTimeMillis());
+        values.put(MediaStore.Images.Media.DATE_TAKEN, System.currentTimeMillis());
+        values.put(MediaStore.Images.Media.DATA, imageFile.toString());
 
-        Intent mediaScanIntent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, contentUri);
-        cordova.getActivity().sendBroadcast(mediaScanIntent);
+        this.cordova.getActivity().getContentResolver().insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values);
     }
 }
