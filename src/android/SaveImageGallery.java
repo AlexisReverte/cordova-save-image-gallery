@@ -207,11 +207,9 @@ public class SaveImageGallery extends CordovaPlugin {
      * making it available in the Android Gallery application and to other apps.
      */
     private void scanPhoto(File imageFile) {
-        Intent mediaScanIntent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
         Uri contentUri = Uri.fromFile(imageFile);
 
-        mediaScanIntent.setData(contentUri);
-
+        Intent mediaScanIntent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, contentUri);
         cordova.getActivity().sendBroadcast(mediaScanIntent);
     }
 }
